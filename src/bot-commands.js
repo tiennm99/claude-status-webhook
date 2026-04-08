@@ -8,8 +8,6 @@ import {
 } from "./kv-store.js";
 import { fetchComponentByName, escapeHtml } from "./status-fetcher.js";
 import { registerInfoCommands } from "./bot-info-commands.js";
-import { trackMetrics } from "./metrics.js";
-
 /**
  * Extract chatId and threadId from grammY context
  */
@@ -26,12 +24,6 @@ function getChatTarget(ctx) {
 export async function handleTelegramWebhook(c) {
   const bot = new Bot(c.env.BOT_TOKEN);
   const kv = c.env.claude_status;
-
-  // Track command usage
-  bot.use(async (ctx, next) => {
-    await trackMetrics(kv, { commandsProcessed: 1 });
-    await next();
-  });
 
   bot.command("start", async (ctx) => {
     const { chatId, threadId } = getChatTarget(ctx);

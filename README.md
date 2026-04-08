@@ -13,7 +13,6 @@ Hosted on [Cloudflare Workers](https://workers.cloudflare.com/) with KV for stor
 - **Supergroup topic support** — send `/start` in a specific topic and notifications go to that topic
 - **On-demand status check** — `/status` fetches live data from status.claude.com
 - **Automatic status monitoring** — cron checks every 5 minutes as a safety net
-- **Metrics dashboard** — track webhooks, messages, cron checks via `/metrics` endpoint
 - **Self-healing** — automatically removes subscribers who block the bot
 
 ## Bot Commands

@@ -1,7 +1,5 @@
 import { getSubscribersByType } from "./kv-store.js";
 import { humanizeStatus, escapeHtml } from "./status-fetcher.js";
-import { trackMetrics } from "./metrics.js";
-
 /**
  * Timing-safe string comparison
  */
@@ -92,12 +90,6 @@ export async function handleStatuspageWebhook(c) {
   }
 
   console.log(`Enqueued ${messages.length} messages for ${category}${componentName ? `:${componentName}` : ""}`);
-
-  await trackMetrics(c.env.claude_status, {
-    webhooksReceived: 1,
-    messagesEnqueued: messages.length,
-    lastWebhookAt: new Date().toISOString(),
-  });
 
   return c.text("OK", 200);
 }

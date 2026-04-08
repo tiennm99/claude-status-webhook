@@ -34,7 +34,6 @@ Cloudflare Workers with three entry points exported from `src/index.js`:
 | GET | `/` | inline | Health check |
 | POST | `/webhook/telegram` | `bot-commands.js` | grammY `webhookCallback("cloudflare-mod")` |
 | POST | `/webhook/status/:secret` | `statuspage-webhook.js` | Receives Statuspage webhooks (URL secret) |
-| GET | `/metrics/:secret` | inline | Bot statistics (text or `?format=json`) |
 | GET | `/migrate/:secret` | inline | One-time KV migration (remove after use) |
 
 ### Data Flow
@@ -52,7 +51,6 @@ Per-subscriber keys (no read-modify-write races):
 
 Special keys:
 - `last-status` — JSON snapshot of component statuses for cron comparison
-- `metrics` — Counters for webhooks, messages, cron checks, commands
 
 `kv-store.js` handles key building/parsing with `kv.list({ prefix: "sub:" })` pagination. `threadId` can be `0` (General topic), so null checks use `!= null`.
 

@@ -1,7 +1,5 @@
 import { removeSubscriber } from "./kv-store.js";
 import { telegramUrl } from "./telegram-api.js";
-import { trackMetrics } from "./metrics.js";
-
 /**
  * Process a batch of queued messages, sending each to Telegram.
  * Handles rate limits (429 → retry), blocked bots (403/400 → remove subscriber).
@@ -59,10 +57,7 @@ export async function handleQueue(batch, env) {
     }
   }
 
-  await trackMetrics(env.claude_status, {
-    messagesSent: sent,
-    messagesFailedPermanent: failed,
-    messagesRetried: retried,
-    subscribersRemoved: removed,
-  });
+  if (sent || failed || retried || removed) {
+    console.log(`Queue batch: sent=${sent} failed=${failed} retried=${retried} removed=${removed}`);
+  }
 }

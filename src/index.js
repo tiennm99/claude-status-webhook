@@ -4,8 +4,6 @@ import { handleStatuspageWebhook } from "./statuspage-webhook.js";
 import { handleQueue } from "./queue-consumer.js";
 import { handleScheduled } from "./cron-status-check.js";
 import { migrateFromSingleKey } from "./kv-store.js";
-import { getMetrics, formatMetricsText } from "./metrics.js";
-
 const app = new Hono();
 
 /**
@@ -22,18 +20,6 @@ async function validateSecret(secret, expected) {
 app.get("/", (c) => c.text("Claude Status Bot is running"));
 app.post("/webhook/telegram", (c) => handleTelegramWebhook(c));
 app.post("/webhook/status/:secret", (c) => handleStatuspageWebhook(c));
-
-// Metrics endpoint — view bot statistics
-app.get("/metrics/:secret", async (c) => {
-  const secret = c.req.param("secret");
-  if (!await validateSecret(secret, c.env.WEBHOOK_SECRET)) {
-    return c.text("Unauthorized", 401);
-  }
-  const metrics = await getMetrics(c.env.claude_status);
-  const format = c.req.query("format");
-  if (format === "json") return c.json(metrics);
-  return c.text(formatMetricsText(metrics));
-});
 
 // One-time migration route — remove after migration is confirmed
 app.get("/migrate/:secret", async (c) => {
