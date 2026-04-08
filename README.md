@@ -141,4 +141,4 @@ curl -X POST http://localhost:8787/webhook/status/your-test-secret \
 
 ## License
 
-[ISC](LICENSE)
+[Apache-2.0](LICENSE)
