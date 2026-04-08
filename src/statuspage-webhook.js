@@ -69,7 +69,7 @@ export async function handleStatuspageWebhook(c) {
   }
 
   // Get filtered subscribers
-  const subscribers = await getSubscribersByType(c.env.SUBSCRIBERS, category);
+  const subscribers = await getSubscribersByType(c.env.CLAUDE_STATUS, category);
 
   // Enqueue messages for fan-out via CF Queues (batch for performance)
   const messages = subscribers.map(({ chatId, threadId }) => ({

@@ -3,7 +3,7 @@
   "main": "src/index.js",
   "compatibility_date": "2024-12-01",
   "kv_namespaces": [
-    { "binding": "SUBSCRIBERS", "id": "<KV_NAMESPACE_ID>" }
+    { "binding": "CLAUDE_STATUS", "id": "<KV_NAMESPACE_ID>" }
   ],
   "queues": {
     "producers": [

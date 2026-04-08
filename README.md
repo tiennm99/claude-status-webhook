@@ -50,7 +50,7 @@ npx wrangler login
 ### 3. Create KV namespace and Queue
 
 ```bash
-npx wrangler kv namespace create SUBSCRIBERS
+npx wrangler kv namespace create claude-status
 npx wrangler queues create claude-status
 ```
 
@@ -58,7 +58,7 @@ Copy the KV namespace ID from the output and update `wrangler.jsonc`:
 
 ```jsonc
 "kv_namespaces": [
-  { "binding": "SUBSCRIBERS", "id": "YOUR_KV_NAMESPACE_ID" }
+  { "binding": "CLAUDE_STATUS", "id": "YOUR_KV_NAMESPACE_ID" }
 ]
 ```
 

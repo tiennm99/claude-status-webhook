@@ -59,5 +59,5 @@ Bot stores `message_thread_id` from the topic where `/start` was sent. Notificat
 
 ## CF Bindings (wrangler.jsonc)
 
-- `SUBSCRIBERS` — KV namespace
+- `CLAUDE_STATUS` — KV namespace
 - `STATUS_QUEUE` — Queue producer/consumer (`claude-status`, batch size 30, max retries 3)

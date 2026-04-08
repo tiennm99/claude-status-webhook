@@ -18,7 +18,7 @@ import {
 function getChatTarget(ctx) {
   return {
     chatId: ctx.chat.id,
-    threadId: ctx.message?.message_thread_id || null,
+    threadId: ctx.message?.message_thread_id ?? null,
   };
 }
 
@@ -27,7 +27,7 @@ function getChatTarget(ctx) {
  */
 export async function handleTelegramWebhook(c) {
   const bot = new Bot(c.env.BOT_TOKEN);
-  const kv = c.env.SUBSCRIBERS;
+  const kv = c.env.CLAUDE_STATUS;
 
   bot.command("start", async (ctx) => {
     const { chatId, threadId } = getChatTarget(ctx);

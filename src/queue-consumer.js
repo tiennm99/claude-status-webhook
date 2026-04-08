@@ -36,7 +36,7 @@ export async function handleQueue(batch, env) {
         msg.ack();
       } else if (res.status === 403 || res.status === 400) {
         // Bot blocked or chat not found — auto-remove subscriber
-        await removeSubscriber(env.SUBSCRIBERS, chatId, threadId);
+        await removeSubscriber(env.CLAUDE_STATUS, chatId, threadId);
         msg.ack();
       } else if (res.status === 429) {
         // Rate limited — let queue retry later
