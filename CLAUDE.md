@@ -41,7 +41,7 @@ Cloudflare Workers with two entry points exported from `src/index.js`:
 
 ### KV Storage
 
-Single key `claude-status:subscribers` stores a JSON object keyed by composite subscriber ID:
+Single key `subscribers` stores a JSON object keyed by composite subscriber ID:
 - DM/group: `"chatId"` → `{ types: ["incident", "component"] }`
 - Supergroup topic: `"chatId:threadId"` → `{ types: ["incident"] }`
 
@@ -60,4 +60,4 @@ Bot stores `message_thread_id` from the topic where `/start` was sent. Notificat
 ## CF Bindings (wrangler.jsonc)
 
 - `SUBSCRIBERS` — KV namespace
-- `STATUS_QUEUE` — Queue producer/consumer (`status-notifications`, batch size 30, max retries 3)
+- `STATUS_QUEUE` — Queue producer/consumer (`claude-status`, batch size 30, max retries 3)

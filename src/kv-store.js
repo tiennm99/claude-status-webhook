@@ -1,4 +1,4 @@
-const KV_KEY = "claude-status:subscribers";
+const KV_KEY = "subscribers";
 
 /**
  * Build composite key: "chatId" or "chatId:threadId" for supergroup topics

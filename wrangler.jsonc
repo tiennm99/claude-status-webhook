@@ -7,10 +7,10 @@
   ],
   "queues": {
     "producers": [
-      { "binding": "STATUS_QUEUE", "queue": "status-notifications" }
+      { "binding": "STATUS_QUEUE", "queue": "claude-status" }
     ],
     "consumers": [
-      { "queue": "status-notifications", "max_batch_size": 30, "max_retries": 3 }
+      { "queue": "claude-status", "max_batch_size": 30, "max_retries": 3 }
     ]
   }
   // Secrets (set via `wrangler secret put`):

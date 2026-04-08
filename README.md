@@ -51,7 +51,7 @@ npx wrangler login
 
 ```bash
 npx wrangler kv namespace create SUBSCRIBERS
-npx wrangler queues create status-notifications
+npx wrangler queues create claude-status
 ```
 
 Copy the KV namespace ID from the output and update `wrangler.jsonc`:
