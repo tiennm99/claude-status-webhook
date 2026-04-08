@@ -30,6 +30,7 @@ Cloudflare Workers with two entry points exported from `src/index.js`:
 | Method | Path | Handler | Purpose |
 |--------|------|---------|---------|
 | GET | `/` | inline | Health check |
+| GET | `/webhook/setup/:secret` | `bot-setup.js` | One-time: register bot commands + set Telegram webhook |
 | POST | `/webhook/telegram` | `bot-commands.js` | grammY `webhookCallback("cloudflare-mod")` |
 | POST | `/webhook/status/:secret` | `statuspage-webhook.js` | Receives Statuspage webhooks |
 

@@ -80,15 +80,15 @@ npm run deploy
 
 Note the worker URL from the output (e.g., `https://claude-status-webhook.<your-subdomain>.workers.dev`).
 
-### 6. Set Telegram webhook
+### 6. Set up Telegram bot
 
-Replace `<BOT_TOKEN>` and `<WORKER_URL>` with your values:
+Visit the setup URL in your browser to register bot commands and set the Telegram webhook in one step:
 
-```bash
-curl "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook?url=<WORKER_URL>/webhook/telegram"
+```
+https://<WORKER_URL>/webhook/setup/<WEBHOOK_SECRET>
 ```
 
-You should see `{"ok":true,"result":true,"description":"Webhook was set"}`.
+You should see a JSON response with `{"ok":true}` for both `webhook` and `commands`.
 
 ### 7. Configure Statuspage webhook
 
