@@ -27,7 +27,7 @@ function getChatTarget(ctx) {
  */
 export async function handleTelegramWebhook(c) {
   const bot = new Bot(c.env.BOT_TOKEN);
-  const kv = c.env.CLAUDE_STATUS;
+  const kv = c.env.claude_status;
 
   bot.command("start", async (ctx) => {
     const { chatId, threadId } = getChatTarget(ctx);

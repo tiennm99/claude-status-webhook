@@ -1,19 +1,30 @@
 {
-  "name": "claude-status-webhook",
-  "main": "src/index.js",
-  "compatibility_date": "2024-12-01",
-  "kv_namespaces": [
-    { "binding": "CLAUDE_STATUS", "id": "<KV_NAMESPACE_ID>" }
-  ],
-  "queues": {
-    "producers": [
-      { "binding": "STATUS_QUEUE", "queue": "claude-status" }
-    ],
-    "consumers": [
-      { "queue": "claude-status", "max_batch_size": 30, "max_retries": 3 }
-    ]
-  }
-  // Secrets (set via `wrangler secret put`):
-  // BOT_TOKEN - Telegram bot token
-  // WEBHOOK_SECRET - Statuspage webhook URL secret
+	"name": "claude-status-webhook",
+	"main": "src/index.js",
+	"compatibility_date": "2024-12-01",
+	"kv_namespaces": [
+		{
+			"binding": "claude_status",
+			"id": "d026d63d84bf49268364deb27d3dc28a",
+			"remote": true
+		}
+	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "claude-status",
+				"queue": "claude-status"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "claude-status",
+				"max_batch_size": 30,
+				"max_retries": 3
+			}
+		]
+	}
+	// Secrets (set via `wrangler secret put`):
+	// BOT_TOKEN - Telegram bot token
+	// WEBHOOK_SECRET - Statuspage webhook URL secret
 }

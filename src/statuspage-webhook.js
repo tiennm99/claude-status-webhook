@@ -69,14 +69,14 @@ export async function handleStatuspageWebhook(c) {
   }
 
   // Get filtered subscribers
-  const subscribers = await getSubscribersByType(c.env.CLAUDE_STATUS, category);
+  const subscribers = await getSubscribersByType(c.env.claude_status, category);
 
   // Enqueue messages for fan-out via CF Queues (batch for performance)
   const messages = subscribers.map(({ chatId, threadId }) => ({
     body: { chatId, threadId, html },
   }));
   for (let i = 0; i < messages.length; i += 100) {
-    await c.env.STATUS_QUEUE.sendBatch(messages.slice(i, i + 100));
+    await c.env["claude-status"].sendBatch(messages.slice(i, i + 100));
   }
 
   return c.text("OK", 200);

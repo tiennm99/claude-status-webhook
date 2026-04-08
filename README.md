@@ -58,7 +58,7 @@ Copy the KV namespace ID from the output and update `wrangler.jsonc`:
 
 ```jsonc
 "kv_namespaces": [
-  { "binding": "CLAUDE_STATUS", "id": "YOUR_KV_NAMESPACE_ID" }
+  { "binding": "claude_status", "id": "YOUR_KV_NAMESPACE_ID" }
 ]
 ```
 
