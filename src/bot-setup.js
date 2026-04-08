@@ -1,10 +1,13 @@
 const TELEGRAM_API = "https://api.telegram.org/bot";
 
 const BOT_COMMANDS = [
+  { command: "help", description: "Detailed command guide" },
   { command: "start", description: "Subscribe to status notifications" },
   { command: "stop", description: "Unsubscribe from notifications" },
-  { command: "status", description: "Check current Claude status" },
+  { command: "status", description: "Current system status" },
   { command: "subscribe", description: "Set notification preferences" },
+  { command: "history", description: "Recent incidents" },
+  { command: "uptime", description: "Component health overview" },
 ];
 
 /**

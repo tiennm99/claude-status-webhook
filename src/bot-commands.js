@@ -6,11 +6,7 @@ import {
   getSubscribers,
   buildSubscriberKey,
 } from "./kv-store.js";
-import {
-  fetchAllComponents,
-  fetchComponentByName,
-  formatComponentLine,
-} from "./status-fetcher.js";
+import { registerInfoCommands } from "./bot-info-commands.js";
 
 /**
  * Extract chatId and threadId from grammY context
@@ -48,26 +44,6 @@ export async function handleTelegramWebhook(c) {
     });
   });
 
-  bot.command("status", async (ctx) => {
-    const args = ctx.match?.trim();
-    try {
-      if (args) {
-        const component = await fetchComponentByName(args);
-        if (!component) {
-          await ctx.reply(`Component "<code>${args}</code>" not found.`, { parse_mode: "HTML" });
-          return;
-        }
-        await ctx.reply(formatComponentLine(component), { parse_mode: "HTML" });
-      } else {
-        const components = await fetchAllComponents();
-        const lines = components.map(formatComponentLine);
-        await ctx.reply(`<b>Claude Status</b>\n\n${lines.join("\n")}`, { parse_mode: "HTML" });
-      }
-    } catch {
-      await ctx.reply("Unable to fetch status. Please try again later.");
-    }
-  });
-
   bot.command("subscribe", async (ctx) => {
     const { chatId, threadId } = getChatTarget(ctx);
     const arg = ctx.match?.trim().toLowerCase();
@@ -97,14 +73,19 @@ export async function handleTelegramWebhook(c) {
     });
   });
 
+  // Info commands: /help, /status, /history, /uptime
+  registerInfoCommands(bot);
+
   bot.on("message", async (ctx) => {
     await ctx.reply(
       "<b>Claude Status Bot</b>\n\n" +
+        "/help — Detailed command guide\n" +
         "/start — Subscribe to notifications\n" +
         "/stop — Unsubscribe\n" +
-        "/status — Check current status\n" +
-        "/status &lt;component&gt; — Check specific component\n" +
-        "/subscribe &lt;type&gt; — Set notification preference",
+        "/status — Current system status\n" +
+        "/subscribe — Notification preferences\n" +
+        "/history — Recent incidents\n" +
+        "/uptime — Component health overview",
       { parse_mode: "HTML" }
     );
   });

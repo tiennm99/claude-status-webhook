@@ -17,13 +17,17 @@ Hosted on [Cloudflare Workers](https://workers.cloudflare.com/) with KV for stor
 
 | Command | Description |
 |---------|-------------|
+| `/help` | Detailed command guide with examples |
 | `/start` | Subscribe to notifications (default: incidents + components) |
 | `/stop` | Unsubscribe from notifications |
-| `/status` | Show current status of all components |
+| `/status` | Show current status with overall indicator and all components |
 | `/status <name>` | Show status of a specific component (fuzzy match) |
 | `/subscribe incident` | Receive incident notifications only |
 | `/subscribe component` | Receive component update notifications only |
 | `/subscribe all` | Receive both (default) |
+| `/history` | Show 5 most recent incidents with impact and links |
+| `/history <count>` | Show up to 10 recent incidents |
+| `/uptime` | Component health overview with last status change time |
 
 ## Prerequisites
 

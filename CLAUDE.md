@@ -38,7 +38,7 @@ Cloudflare Workers with two entry points exported from `src/index.js`:
 
 1. **Statuspage → Worker**: Webhook POST → validate secret (timing-safe) → parse incident/component event → filter subscribers by preference → `sendBatch` to CF Queue
 2. **Queue → Telegram**: Consumer processes batches of 30 → `sendMessage` via raw fetch → auto-removes blocked subscribers (403/400), retries on 429
-3. **User → Bot**: Telegram webhook → grammY handles `/start`, `/stop`, `/status`, `/subscribe` commands → reads/writes KV
+3. **User → Bot**: Telegram webhook → grammY handles `/help`, `/start`, `/stop`, `/status`, `/subscribe`, `/history`, `/uptime` commands → reads/writes KV
 
 ### KV Storage
 
