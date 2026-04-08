@@ -1,0 +1,19 @@
+{
+  "name": "claude-status-webhook",
+  "main": "src/index.js",
+  "compatibility_date": "2024-12-01",
+  "kv_namespaces": [
+    { "binding": "SUBSCRIBERS", "id": "<KV_NAMESPACE_ID>" }
+  ],
+  "queues": {
+    "producers": [
+      { "binding": "STATUS_QUEUE", "queue": "status-notifications" }
+    ],
+    "consumers": [
+      { "queue": "status-notifications", "max_batch_size": 30, "max_retries": 3 }
+    ]
+  }
+  // Secrets (set via `wrangler secret put`):
+  // BOT_TOKEN - Telegram bot token
+  // WEBHOOK_SECRET - Statuspage webhook URL secret
+}

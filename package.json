@@ -1,0 +1,29 @@
+{
+  "name": "claude-status-webhook",
+  "version": "1.0.0",
+  "description": "[Claude Status](https://status.claude.com/)'s webhook for Telegram bot. Hosted on Cloudflare Workers",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiennm99/claude-status-webhook.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tiennm99/claude-status-webhook/issues"
+  },
+  "homepage": "https://github.com/tiennm99/claude-status-webhook#readme",
+  "dependencies": {
+    "grammy": "^1.42.0",
+    "hono": "^4.12.12"
+  },
+  "devDependencies": {
+    "wrangler": "^4.81.0"
+  }
+}
