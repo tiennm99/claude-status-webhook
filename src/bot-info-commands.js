@@ -1,4 +1,5 @@
 import {
+  escapeHtml,
   fetchComponentByName,
   fetchSummary,
   fetchIncidents,
@@ -26,9 +27,11 @@ export function registerInfoCommands(bot) {
         `Show current status of all components.\n` +
         `Add a component name for a specific check.\n` +
         `Example: <code>/status api</code>\n\n` +
-        `<b>/subscribe</b> &lt;type&gt;\n` +
+        `<b>/subscribe</b> &lt;type&gt; [component]\n` +
         `Set what notifications you receive.\n` +
-        `Options: <code>incident</code>, <code>component</code>, <code>all</code>\n` +
+        `Types: <code>incident</code>, <code>component</code>, <code>all</code>\n` +
+        `Component filter: <code>/subscribe component api</code>\n` +
+        `Clear filter: <code>/subscribe component all</code>\n` +
         `Example: <code>/subscribe incident</code>\n\n` +
         `<b>/history</b> [count]\n` +
         `Show recent incidents. Default: 5, max: 10.\n` +
@@ -46,7 +49,7 @@ export function registerInfoCommands(bot) {
       if (args) {
         const component = await fetchComponentByName(args);
         if (!component) {
-          await ctx.reply(`Component "<code>${args}</code>" not found.`, { parse_mode: "HTML" });
+          await ctx.reply(`Component "<code>${escapeHtml(args)}</code>" not found.`, { parse_mode: "HTML" });
           return;
         }
         await ctx.reply(formatComponentLine(component), { parse_mode: "HTML" });
@@ -66,7 +69,8 @@ export function registerInfoCommands(bot) {
           { parse_mode: "HTML", disable_web_page_preview: true }
         );
       }
-    } catch {
+    } catch (err) {
+      console.error("status command error:", err);
       await ctx.reply("Unable to fetch status. Please try again later.");
     }
   });
@@ -87,7 +91,8 @@ export function registerInfoCommands(bot) {
           `<a href="${STATUS_URL}/history">View full history</a>`,
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
-    } catch {
+    } catch (err) {
+      console.error("history command error:", err);
       await ctx.reply("Unable to fetch incident history. Please try again later.");
     }
   });
@@ -111,7 +116,8 @@ export function registerInfoCommands(bot) {
           `<a href="${STATUS_URL}">View uptime on status page</a>`,
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
-    } catch {
+    } catch (err) {
+      console.error("uptime command error:", err);
       await ctx.reply("Unable to fetch uptime data. Please try again later.");
     }
   });

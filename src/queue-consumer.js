@@ -1,6 +1,5 @@
 import { removeSubscriber } from "./kv-store.js";
-
-const TELEGRAM_API = "https://api.telegram.org/bot";
+import { telegramUrl } from "./telegram-api.js";
 
 /**
  * Process a batch of queued messages, sending each to Telegram.
@@ -12,6 +11,7 @@ export async function handleQueue(batch, env) {
 
     // Defensive check for malformed messages
     if (!chatId || !html) {
+      console.error("Queue: malformed message, skipping", msg.body);
       msg.ack();
       continue;
     }
@@ -24,9 +24,9 @@ export async function handleQueue(batch, env) {
         disable_web_page_preview: true,
       };
       // Send to specific supergroup topic if threadId present
-      if (threadId) payload.message_thread_id = threadId;
+      if (threadId != null) payload.message_thread_id = threadId;
 
-      const res = await fetch(`${TELEGRAM_API}${env.BOT_TOKEN}/sendMessage`, {
+      const res = await fetch(telegramUrl(env.BOT_TOKEN, "sendMessage"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -36,17 +36,21 @@ export async function handleQueue(batch, env) {
         msg.ack();
       } else if (res.status === 403 || res.status === 400) {
         // Bot blocked or chat not found — auto-remove subscriber
+        console.log(`Queue: removing subscriber ${chatId}:${threadId} (HTTP ${res.status})`);
         await removeSubscriber(env.claude_status, chatId, threadId);
         msg.ack();
       } else if (res.status === 429) {
         // Rate limited — let queue retry later
+        console.log("Queue: rate limited, retrying");
         msg.retry();
       } else {
         // Unknown error — ack to avoid infinite retry
+        console.error(`Queue: unexpected HTTP ${res.status} for ${chatId}`);
         msg.ack();
       }
-    } catch {
+    } catch (err) {
       // Network error — retry
+      console.error("Queue: network error, retrying", err);
       msg.retry();
     }
   }

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const TELEGRAM_API = "https://api.telegram.org/bot";
 
 const BOT_COMMANDS = [
@@ -10,37 +12,31 @@ const BOT_COMMANDS = [
   { command: "uptime", description: "Component health overview" },
 ];
 
-/**
- * One-time setup: register bot commands and set Telegram webhook.
- * GET /webhook/setup/:secret
- */
-export async function setupBot(c) {
-  const secret = c.req.param("secret");
-  if (secret !== c.env.WEBHOOK_SECRET) {
-    return c.text("Unauthorized", 401);
+async function main() {
+  const token = process.env.BOT_TOKEN;
+  const workerUrl = process.env.WORKER_URL;
+
+  if (!token || !workerUrl) {
+    console.error("Required env vars: BOT_TOKEN, WORKER_URL");
+    console.error("Usage: BOT_TOKEN=xxx WORKER_URL=https://your-worker.workers.dev node scripts/setup-bot.js");
+    process.exit(1);
   }
 
-  const token = c.env.BOT_TOKEN;
-  const workerUrl = new URL(c.req.url).origin;
-
-  // Set webhook URL
+  // Set webhook
   const webhookRes = await fetch(`${TELEGRAM_API}${token}/setWebhook`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url: `${workerUrl}/webhook/telegram` }),
   });
-  const webhookData = await webhookRes.json();
+  console.log("Webhook:", await webhookRes.json());
 
-  // Register bot commands
+  // Register commands
   const commandsRes = await fetch(`${TELEGRAM_API}${token}/setMyCommands`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ commands: BOT_COMMANDS }),
   });
-  const commandsData = await commandsRes.json();
-
-  return c.json({
-    webhook: webhookData,
-    commands: commandsData,
-  });
+  console.log("Commands:", await commandsRes.json());
 }
+
+main().catch(console.error);
