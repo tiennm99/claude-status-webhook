@@ -19,7 +19,6 @@ No test framework configured yet. No linter configured.
 
 - `BOT_TOKEN` — Telegram bot token
 - `WEBHOOK_SECRET` — Secret token in Statuspage webhook URL path
-- `STATUSPAGE_HMAC_KEY` — HMAC key from Statuspage webhook settings (optional, for signature verification)
 
 ## Architecture
 
@@ -34,12 +33,13 @@ Cloudflare Workers with three entry points exported from `src/index.js`:
 |--------|------|---------|---------|
 | GET | `/` | inline | Health check |
 | POST | `/webhook/telegram` | `bot-commands.js` | grammY `webhookCallback("cloudflare-mod")` |
-| POST | `/webhook/status/:secret` | `statuspage-webhook.js` | Receives Statuspage webhooks (HMAC + URL secret) |
+| POST | `/webhook/status/:secret` | `statuspage-webhook.js` | Receives Statuspage webhooks (URL secret) |
+| GET | `/metrics/:secret` | inline | Bot statistics (text or `?format=json`) |
 | GET | `/migrate/:secret` | inline | One-time KV migration (remove after use) |
 
 ### Data Flow
 
-1. **Statuspage → Worker**: Webhook POST → verify HMAC signature (fallback: URL secret) → parse incident/component event → filter subscribers by type + component → `sendBatch` to CF Queue
+1. **Statuspage → Worker**: Webhook POST → verify URL secret (timing-safe) → parse incident/component event → filter subscribers by type + component → `sendBatch` to CF Queue
 2. **Cron → Worker**: Every 5 min → fetch summary → compare with `last-status` KV → notify on changes → update stored state
 3. **Queue → Telegram**: Consumer processes batches of 30 → `sendMessage` via `telegram-api.js` helper → auto-removes blocked subscribers (403/400), retries on 429
 4. **User → Bot**: Telegram webhook → grammY handles `/help`, `/start`, `/stop`, `/status`, `/subscribe`, `/history`, `/uptime` commands → reads/writes KV
@@ -52,6 +52,7 @@ Per-subscriber keys (no read-modify-write races):
 
 Special keys:
 - `last-status` — JSON snapshot of component statuses for cron comparison
+- `metrics` — Counters for webhooks, messages, cron checks, commands
 
 `kv-store.js` handles key building/parsing with `kv.list({ prefix: "sub:" })` pagination. `threadId` can be `0` (General topic), so null checks use `!= null`.
 

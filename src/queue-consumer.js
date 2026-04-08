@@ -1,11 +1,14 @@
 import { removeSubscriber } from "./kv-store.js";
 import { telegramUrl } from "./telegram-api.js";
+import { trackMetrics } from "./metrics.js";
 
 /**
  * Process a batch of queued messages, sending each to Telegram.
  * Handles rate limits (429 → retry), blocked bots (403/400 → remove subscriber).
  */
 export async function handleQueue(batch, env) {
+  let sent = 0, failed = 0, retried = 0, removed = 0;
+
   for (const msg of batch.messages) {
     const { chatId, threadId, html } = msg.body;
 
@@ -33,25 +36,33 @@ export async function handleQueue(batch, env) {
       });
 
       if (res.ok) {
+        sent++;
         msg.ack();
       } else if (res.status === 403 || res.status === 400) {
-        // Bot blocked or chat not found — auto-remove subscriber
         console.log(`Queue: removing subscriber ${chatId}:${threadId} (HTTP ${res.status})`);
         await removeSubscriber(env.claude_status, chatId, threadId);
+        removed++;
         msg.ack();
       } else if (res.status === 429) {
-        // Rate limited — let queue retry later
         console.log("Queue: rate limited, retrying");
+        retried++;
         msg.retry();
       } else {
-        // Unknown error — ack to avoid infinite retry
         console.error(`Queue: unexpected HTTP ${res.status} for ${chatId}`);
+        failed++;
         msg.ack();
       }
     } catch (err) {
-      // Network error — retry
       console.error("Queue: network error, retrying", err);
+      retried++;
       msg.retry();
     }
   }
+
+  await trackMetrics(env.claude_status, {
+    messagesSent: sent,
+    messagesFailedPermanent: failed,
+    messagesRetried: retried,
+    subscribersRemoved: removed,
+  });
 }

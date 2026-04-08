@@ -1,37 +1,6 @@
 import { getSubscribersByType } from "./kv-store.js";
 import { humanizeStatus, escapeHtml } from "./status-fetcher.js";
-
-/**
- * Convert hex string to Uint8Array
- */
-function hexToBytes(hex) {
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-  }
-  return bytes;
-}
-
-/**
- * Verify Statuspage HMAC-SHA256 signature
- */
-async function verifyHmacSignature(request, hmacKey) {
-  if (!hmacKey) return false;
-  const signature = request.headers.get("X-Statuspage-Signature");
-  if (!signature) return false;
-
-  const body = await request.clone().arrayBuffer();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(hmacKey),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["verify"]
-  );
-
-  const sigBytes = hexToBytes(signature);
-  return crypto.subtle.verify("HMAC", key, sigBytes, body);
-}
+import { trackMetrics } from "./metrics.js";
 
 /**
  * Timing-safe string comparison
@@ -79,13 +48,10 @@ function formatComponentMessage(component, update) {
  * Handle incoming Statuspage webhook
  */
 export async function handleStatuspageWebhook(c) {
-  // Try HMAC verification first, fall back to URL secret
-  const hmacValid = await verifyHmacSignature(c.req.raw, c.env.STATUSPAGE_HMAC_KEY);
-  if (!hmacValid) {
-    const secret = c.req.param("secret");
-    if (!await timingSafeEqual(secret, c.env.WEBHOOK_SECRET)) {
-      return c.text("Unauthorized", 401);
-    }
+  // Validate URL secret (timing-safe)
+  const secret = c.req.param("secret");
+  if (!await timingSafeEqual(secret, c.env.WEBHOOK_SECRET)) {
+    return c.text("Unauthorized", 401);
   }
 
   // Parse body
@@ -126,6 +92,12 @@ export async function handleStatuspageWebhook(c) {
   }
 
   console.log(`Enqueued ${messages.length} messages for ${category}${componentName ? `:${componentName}` : ""}`);
+
+  await trackMetrics(c.env.claude_status, {
+    webhooksReceived: 1,
+    messagesEnqueued: messages.length,
+    lastWebhookAt: new Date().toISOString(),
+  });
 
   return c.text("OK", 200);
 }

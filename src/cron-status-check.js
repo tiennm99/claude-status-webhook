@@ -1,5 +1,6 @@
 import { fetchSummary, humanizeStatus, escapeHtml } from "./status-fetcher.js";
 import { getSubscribersByType } from "./kv-store.js";
+import { trackMetrics } from "./metrics.js";
 
 const LAST_STATUS_KEY = "last-status";
 
@@ -58,6 +59,11 @@ export async function handleScheduled(env) {
     timestamp: new Date().toISOString(),
   }));
 
+  await trackMetrics(kv, {
+    cronChecks: 1,
+    lastCronAt: new Date().toISOString(),
+  });
+
   if (changes.length === 0) return;
 
   console.log(`Cron: ${changes.length} component change(s) detected`);
@@ -74,4 +80,6 @@ export async function handleScheduled(env) {
     }
     console.log(`Cron: enqueued ${messages.length} messages for ${name} change`);
   }
+
+  await trackMetrics(kv, { cronChangesDetected: changes.length });
 }
