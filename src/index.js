@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { handleTelegramWebhook } from "./bot-commands.js";
 import { handleStatuspageWebhook } from "./statuspage-webhook.js";
 import { handleQueue } from "./queue-consumer.js";
-import { setupBot } from "./bot-setup.js";
+import { migrateFromSingleKey } from "./kv-store.js";
+import { timingSafeEqual } from "./crypto-utils.js";
 
 const app = new Hono();
 
@@ -20,9 +21,18 @@ app.use("*", async (c, next) => {
 });
 
 app.get("/", (c) => c.text("Claude Status Bot is running"));
-app.get("/webhook/setup/:secret", (c) => setupBot(c));
 app.post("/webhook/telegram", (c) => handleTelegramWebhook(c));
 app.post("/webhook/status/:secret", (c) => handleStatuspageWebhook(c));
+
+// One-time migration route — remove after migration is confirmed
+app.post("/migrate/:secret", async (c) => {
+  const secret = c.req.param("secret");
+  if (!await timingSafeEqual(secret, c.env.WEBHOOK_SECRET)) {
+    return c.text("Unauthorized", 401);
+  }
+  const count = await migrateFromSingleKey(c.env.claude_status);
+  return c.json({ migrated: count });
+});
 
 export default {
   fetch: app.fetch,

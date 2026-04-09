@@ -1,17 +1,18 @@
 import { removeSubscriber } from "./kv-store.js";
-
-const TELEGRAM_API = "https://api.telegram.org/bot";
-
+import { telegramUrl } from "./telegram-api.js";
 /**
  * Process a batch of queued messages, sending each to Telegram.
  * Handles rate limits (429 → retry), blocked bots (403/400 → remove subscriber).
  */
 export async function handleQueue(batch, env) {
+  let sent = 0, failed = 0, retried = 0, removed = 0;
+
   for (const msg of batch.messages) {
     const { chatId, threadId, html } = msg.body;
 
     // Defensive check for malformed messages
     if (!chatId || !html) {
+      console.error("Queue: malformed message, skipping", msg.body);
       msg.ack();
       continue;
     }
@@ -24,30 +25,39 @@ export async function handleQueue(batch, env) {
         disable_web_page_preview: true,
       };
       // Send to specific supergroup topic if threadId present
-      if (threadId) payload.message_thread_id = threadId;
+      if (threadId != null) payload.message_thread_id = threadId;
 
-      const res = await fetch(`${TELEGRAM_API}${env.BOT_TOKEN}/sendMessage`, {
+      const res = await fetch(telegramUrl(env.BOT_TOKEN, "sendMessage"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
+        sent++;
         msg.ack();
       } else if (res.status === 403 || res.status === 400) {
-        // Bot blocked or chat not found — auto-remove subscriber
+        console.log(`Queue: removing subscriber ${chatId}:${threadId} (HTTP ${res.status})`);
         await removeSubscriber(env.claude_status, chatId, threadId);
+        removed++;
         msg.ack();
       } else if (res.status === 429) {
-        // Rate limited — let queue retry later
+        console.log("Queue: rate limited, retrying");
+        retried++;
         msg.retry();
       } else {
-        // Unknown error — ack to avoid infinite retry
+        console.error(`Queue: unexpected HTTP ${res.status} for ${chatId}`);
+        failed++;
         msg.ack();
       }
-    } catch {
-      // Network error — retry
+    } catch (err) {
+      console.error("Queue: network error, retrying", err);
+      retried++;
       msg.retry();
     }
+  }
+
+  if (sent || failed || retried || removed) {
+    console.log(`Queue batch: sent=${sent} failed=${failed} retried=${retried} removed=${removed}`);
   }
 }

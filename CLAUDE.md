@@ -10,7 +10,8 @@ Telegram bot that forwards [status.claude.com](https://status.claude.com/) (Atla
 
 - `npm run dev` — Start local dev server (wrangler dev, emulates KV + Queues locally)
 - `npm run deploy` — Deploy to Cloudflare Workers
-- `npx wrangler deploy --dry-run --outdir=dist` — Verify build without deploying
+- `npx wrangler deploy --dry-run` — Verify build without deploying
+- `node scripts/setup-bot.js` — One-time: register bot commands + set Telegram webhook (requires BOT_TOKEN and WORKER_URL env vars)
 
 No test framework configured yet. No linter configured.
 
@@ -21,32 +22,41 @@ No test framework configured yet. No linter configured.
 
 ## Architecture
 
-Cloudflare Workers with two entry points exported from `src/index.js`:
+Cloudflare Workers with three entry points exported from `src/index.js`:
 - **`fetch`** — Hono.js HTTP handler (routes below)
 - **`queue`** — CF Queues consumer for fan-out message delivery
+- **`scheduled`** — CF Cron Trigger (every 5 min) for status polling safety net
 
 ### Routes
 
 | Method | Path | Handler | Purpose |
 |--------|------|---------|---------|
 | GET | `/` | inline | Health check |
-| GET | `/webhook/setup/:secret` | `bot-setup.js` | One-time: register bot commands + set Telegram webhook |
 | POST | `/webhook/telegram` | `bot-commands.js` | grammY `webhookCallback("cloudflare-mod")` |
-| POST | `/webhook/status/:secret` | `statuspage-webhook.js` | Receives Statuspage webhooks |
+| POST | `/webhook/status/:secret` | `statuspage-webhook.js` | Receives Statuspage webhooks (URL secret) |
+| GET | `/migrate/:secret` | inline | One-time KV migration (remove after use) |
 
 ### Data Flow
 
-1. **Statuspage → Worker**: Webhook POST → validate secret (timing-safe) → parse incident/component event → filter subscribers by preference → `sendBatch` to CF Queue
-2. **Queue → Telegram**: Consumer processes batches of 30 → `sendMessage` via raw fetch → auto-removes blocked subscribers (403/400), retries on 429
-3. **User → Bot**: Telegram webhook → grammY handles `/help`, `/start`, `/stop`, `/status`, `/subscribe`, `/history`, `/uptime` commands → reads/writes KV
+1. **Statuspage → Worker**: Webhook POST → verify URL secret (timing-safe) → parse incident/component event → filter subscribers by type + component → `sendBatch` to CF Queue
+2. **Cron → Worker**: Every 5 min → fetch summary → compare with `last-status` KV → notify on changes → update stored state
+3. **Queue → Telegram**: Consumer processes batches of 30 → `sendMessage` via `telegram-api.js` helper → auto-removes blocked subscribers (403/400), retries on 429
+4. **User → Bot**: Telegram webhook → grammY handles `/help`, `/start`, `/stop`, `/status`, `/subscribe`, `/history`, `/uptime` commands → reads/writes KV
 
 ### KV Storage
 
-Single key `subscribers` stores a JSON object keyed by composite subscriber ID:
-- DM/group: `"chatId"` → `{ types: ["incident", "component"] }`
-- Supergroup topic: `"chatId:threadId"` → `{ types: ["incident"] }`
+Per-subscriber keys (no read-modify-write races):
+- `sub:{chatId}` → `{ types: ["incident", "component"], components: [] }`
+- `sub:{chatId}:{threadId}` → `{ types: ["incident"], components: ["API"] }`
 
-`kv-store.js` handles key building/parsing — `threadId` can be `0` (General topic), so null checks use `!= null` not truthiness.
+Special keys:
+- `last-status` — JSON snapshot of component statuses for cron comparison
+
+`kv-store.js` handles key building/parsing with `kv.list({ prefix: "sub:" })` pagination. `threadId` can be `0` (General topic), so null checks use `!= null`.
+
+### Component-Specific Subscriptions
+
+Subscribers can filter to specific components via `/subscribe component <name>`. Empty `components` array = all components (default). Filtering applies to both webhook and cron notifications.
 
 ### Supergroup Topic Support
 
@@ -62,3 +72,4 @@ Bot stores `message_thread_id` from the topic where `/start` was sent. Notificat
 
 - `claude_status` — KV namespace
 - `claude-status` — Queue producer/consumer (batch size 30, max retries 3)
+- Cron: `*/5 * * * *` — triggers `scheduled` export every 5 minutes

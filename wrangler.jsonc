@@ -23,6 +23,9 @@
 				"max_retries": 3
 			}
 		]
+	},
+	"triggers": {
+		"crons": ["*/5 * * * *"]
 	}
 	// Secrets (set via `wrangler secret put`):
 	// BOT_TOKEN - Telegram bot token
