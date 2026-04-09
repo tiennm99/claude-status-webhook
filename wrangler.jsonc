@@ -5,8 +5,7 @@
 	"kv_namespaces": [
 		{
 			"binding": "claude_status",
-			"id": "d026d63d84bf49268364deb27d3dc28a",
-			"remote": true
+			"id": "d026d63d84bf49268364deb27d3dc28a"
 		}
 	],
 	"queues": {
