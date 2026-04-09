@@ -12,7 +12,6 @@ Hosted on [Cloudflare Workers](https://workers.cloudflare.com/) with KV for stor
 - **Component-specific filtering** — subscribe to specific components (e.g., API only)
 - **Supergroup topic support** — send `/start` in a specific topic and notifications go to that topic
 - **On-demand status check** — `/status` fetches live data from status.claude.com
-- **Automatic status monitoring** — cron checks every 5 minutes as a safety net
 - **Self-healing** — automatically removes subscribers who block the bot
 
 ## Bot Commands
@@ -110,17 +109,11 @@ Replace `<WEBHOOK_SECRET>` with the secret you set in step 4.
 
 If you have existing subscribers from an older version, run the migration endpoint once:
 
-```
-https://<WORKER_URL>/migrate/<WEBHOOK_SECRET>
+```bash
+curl -X POST https://<WORKER_URL>/migrate/<WEBHOOK_SECRET>
 ```
 
 This converts the old single-key format to per-subscriber KV keys. Remove the `/migrate` route from `src/index.js` after confirming success.
-
-## Automatic Status Monitoring
-
-The bot checks status.claude.com every 5 minutes via Cloudflare Cron Triggers (free tier). If a component status changes between checks, subscribers are notified automatically. This acts as a safety net in case Statuspage webhooks are delayed or missed.
-
-Cron-detected changes are tagged with "(detected by status check)" to distinguish from webhook notifications.
 
 ## Local Development
 
@@ -160,7 +153,6 @@ curl -X POST http://localhost:8787/webhook/status/your-test-secret \
 - **Runtime**: [Cloudflare Workers](https://workers.cloudflare.com/)
 - **Storage**: [Cloudflare KV](https://developers.cloudflare.com/kv/)
 - **Queue**: [Cloudflare Queues](https://developers.cloudflare.com/queues/)
-- **Cron**: [Cloudflare Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/)
 - **HTTP framework**: [Hono](https://hono.dev/)
 - **Telegram framework**: [grammY](https://grammy.dev/)
 

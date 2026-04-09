@@ -22,10 +22,9 @@ No test framework configured yet. No linter configured.
 
 ## Architecture
 
-Cloudflare Workers with three entry points exported from `src/index.js`:
+Cloudflare Workers with two entry points exported from `src/index.js`:
 - **`fetch`** — Hono.js HTTP handler (routes below)
 - **`queue`** — CF Queues consumer for fan-out message delivery
-- **`scheduled`** — CF Cron Trigger (every 5 min) for status polling safety net
 
 ### Routes
 
@@ -34,14 +33,13 @@ Cloudflare Workers with three entry points exported from `src/index.js`:
 | GET | `/` | inline | Health check |
 | POST | `/webhook/telegram` | `bot-commands.js` | grammY `webhookCallback("cloudflare-mod")` |
 | POST | `/webhook/status/:secret` | `statuspage-webhook.js` | Receives Statuspage webhooks (URL secret) |
-| GET | `/migrate/:secret` | inline | One-time KV migration (remove after use) |
+| POST | `/migrate/:secret` | inline | One-time KV migration (remove after use) |
 
 ### Data Flow
 
-1. **Statuspage → Worker**: Webhook POST → verify URL secret (timing-safe) → parse incident/component event → filter subscribers by type + component → `sendBatch` to CF Queue
-2. **Cron → Worker**: Every 5 min → fetch summary → compare with `last-status` KV → notify on changes → update stored state
-3. **Queue → Telegram**: Consumer processes batches of 30 → `sendMessage` via `telegram-api.js` helper → auto-removes blocked subscribers (403/400), retries on 429
-4. **User → Bot**: Telegram webhook → grammY handles `/help`, `/start`, `/stop`, `/status`, `/subscribe`, `/history`, `/uptime` commands → reads/writes KV
+1. **Statuspage → Worker**: Webhook POST → verify URL secret (timing-safe via `crypto-utils.js`) → parse incident/component event → filter subscribers by type + component → `sendBatch` to CF Queue
+2. **Queue → Telegram**: Consumer processes batches of 30 → `sendMessage` via `telegram-api.js` helper → auto-removes blocked subscribers (403/400), retries on 429
+3. **User → Bot**: Telegram webhook → grammY handles `/help`, `/start`, `/stop`, `/status`, `/subscribe`, `/history`, `/uptime` commands → reads/writes KV
 
 ### KV Storage
 
@@ -49,14 +47,11 @@ Per-subscriber keys (no read-modify-write races):
 - `sub:{chatId}` → `{ types: ["incident", "component"], components: [] }`
 - `sub:{chatId}:{threadId}` → `{ types: ["incident"], components: ["API"] }`
 
-Special keys:
-- `last-status` — JSON snapshot of component statuses for cron comparison
-
-`kv-store.js` handles key building/parsing with `kv.list({ prefix: "sub:" })` pagination. `threadId` can be `0` (General topic), so null checks use `!= null`.
+`kv-store.js` handles key building/parsing with `kv.list({ prefix: "sub:" })` pagination. Subscriber type/component data is stored as KV metadata so `getSubscribersByType()` uses only `list()` (O(1)) instead of individual `get()` calls. `threadId` can be `0` (General topic), so null checks use `!= null`.
 
 ### Component-Specific Subscriptions
 
-Subscribers can filter to specific components via `/subscribe component <name>`. Empty `components` array = all components (default). Filtering applies to both webhook and cron notifications.
+Subscribers can filter to specific components via `/subscribe component <name>`. Empty `components` array = all components (default). Filtering applies to webhook notifications.
 
 ### Supergroup Topic Support
 
@@ -72,4 +67,3 @@ Bot stores `message_thread_id` from the topic where `/start` was sent. Notificat
 
 - `claude_status` — KV namespace
 - `claude-status` — Queue producer/consumer (batch size 30, max retries 3)
-- Cron: `*/5 * * * *` — triggers `scheduled` export every 5 minutes

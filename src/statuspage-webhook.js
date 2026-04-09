@@ -1,15 +1,6 @@
 import { getSubscribersByType } from "./kv-store.js";
 import { humanizeStatus, escapeHtml } from "./status-fetcher.js";
-/**
- * Timing-safe string comparison
- */
-async function timingSafeEqual(a, b) {
-  const encoder = new TextEncoder();
-  const bufA = encoder.encode(a);
-  const bufB = encoder.encode(b);
-  if (bufA.byteLength !== bufB.byteLength) return false;
-  return crypto.subtle.timingSafeEqual(bufA, bufB);
-}
+import { timingSafeEqual } from "./crypto-utils.js";
 
 /**
  * Format incident event as Telegram HTML message

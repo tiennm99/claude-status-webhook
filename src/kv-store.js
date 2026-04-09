@@ -31,6 +31,14 @@ function parseKvKey(kvKey) {
 }
 
 /**
+ * Build KV metadata object for subscriber filtering via list().
+ * Stored as KV key metadata so getSubscribersByType() needs only list(), not get().
+ */
+function buildMetadata(types, components) {
+  return { types, components };
+}
+
+/**
  * List all subscriber KV keys with cursor pagination
  */
 async function listAllSubscriberKeys(kv) {
@@ -45,13 +53,18 @@ async function listAllSubscriberKeys(kv) {
 }
 
 /**
- * Add or re-subscribe a user with default types
+ * Add or re-subscribe a user. Preserves existing types and components if already subscribed.
  */
 export async function addSubscriber(kv, chatId, threadId, types = ["incident", "component"]) {
   const key = buildKvKey(chatId, threadId);
   const existing = await kv.get(key, "json");
-  const value = { types, components: existing?.components || [] };
-  await kv.put(key, JSON.stringify(value));
+  const value = {
+    types: existing?.types || types,
+    components: existing?.components || [],
+  };
+  await kv.put(key, JSON.stringify(value), {
+    metadata: buildMetadata(value.types, value.components),
+  });
 }
 
 /**
@@ -70,7 +83,9 @@ export async function updateSubscriberTypes(kv, chatId, threadId, types) {
   const existing = await kv.get(key, "json");
   if (!existing) return false;
   existing.types = types;
-  await kv.put(key, JSON.stringify(existing));
+  await kv.put(key, JSON.stringify(existing), {
+    metadata: buildMetadata(existing.types, existing.components),
+  });
   return true;
 }
 
@@ -82,7 +97,9 @@ export async function updateSubscriberComponents(kv, chatId, threadId, component
   const existing = await kv.get(key, "json");
   if (!existing) return false;
   existing.components = components;
-  await kv.put(key, JSON.stringify(existing));
+  await kv.put(key, JSON.stringify(existing), {
+    metadata: buildMetadata(existing.types, existing.components),
+  });
   return true;
 }
 
@@ -96,19 +113,18 @@ export async function getSubscriber(kv, chatId, threadId) {
 
 /**
  * Get subscribers filtered by event type and optional component name.
- * Returns [{ chatId, threadId, ...value }, ...]
+ * Uses KV metadata from list() — O(1) list call, no individual get() needed.
  */
 export async function getSubscribersByType(kv, eventType, componentName = null) {
   const keys = await listAllSubscriberKeys(kv);
   const results = [];
 
-  for (const { name } of keys) {
-    const value = await kv.get(name, "json");
-    if (!value || !value.types.includes(eventType)) continue;
+  for (const { name, metadata } of keys) {
+    if (!metadata?.types?.includes(eventType)) continue;
 
     // Component-specific filtering
-    if (eventType === "component" && componentName && value.components?.length > 0) {
-      const match = value.components.some(
+    if (eventType === "component" && componentName && metadata.components?.length > 0) {
+      const match = metadata.components.some(
         (c) => c.toLowerCase() === componentName.toLowerCase()
       );
       if (!match) continue;
@@ -122,21 +138,6 @@ export async function getSubscribersByType(kv, eventType, componentName = null) 
 }
 
 /**
- * Get all subscribers with their full data
- */
-export async function getAllSubscribers(kv) {
-  const keys = await listAllSubscriberKeys(kv);
-  const results = [];
-  for (const { name } of keys) {
-    const value = await kv.get(name, "json");
-    if (!value) continue;
-    const { chatId, threadId } = parseKvKey(name);
-    results.push({ chatId, threadId, ...value });
-  }
-  return results;
-}
-
-/**
  * One-time migration from single-key "subscribers" to per-key format.
  * Returns count of migrated entries.
  */
@@ -146,9 +147,10 @@ export async function migrateFromSingleKey(kv) {
 
   const entries = Object.entries(old);
   for (const [compositeKey, value] of entries) {
-    // Preserve components field if it exists, default to empty
     const data = { types: value.types || [], components: value.components || [] };
-    await kv.put(`${KEY_PREFIX}${compositeKey}`, JSON.stringify(data));
+    await kv.put(`${KEY_PREFIX}${compositeKey}`, JSON.stringify(data), {
+      metadata: buildMetadata(data.types, data.components),
+    });
   }
 
   // Verify migrated count before deleting old key
