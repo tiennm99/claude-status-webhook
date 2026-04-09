@@ -40,9 +40,15 @@ function formatComponentMessage(component, update) {
 export async function handleStatuspageWebhook(c) {
   try {
     // Validate URL secret (timing-safe)
+    // Guard against misconfigured deploy (undefined env var)
+    if (!c.env.WEBHOOK_SECRET) {
+      console.error(JSON.stringify({ event: "webhook_error", reason: "WEBHOOK_SECRET not configured" }));
+      return c.text("OK", 200);
+    }
+
     const secret = c.req.param("secret");
     if (!await timingSafeEqual(secret, c.env.WEBHOOK_SECRET)) {
-      console.error("Statuspage webhook: invalid secret");
+      console.error(JSON.stringify({ event: "webhook_error", reason: "invalid_secret" }));
       return c.text("OK", 200);
     }
 
@@ -51,37 +57,37 @@ export async function handleStatuspageWebhook(c) {
     try {
       body = await c.req.json();
     } catch {
-      console.error("Statuspage webhook: invalid JSON body");
+      console.error(JSON.stringify({ event: "webhook_error", reason: "invalid_json" }));
       return c.text("OK", 200);
     }
 
     const eventType = body?.meta?.event_type;
     if (!eventType) {
-      console.error("Statuspage webhook: missing event_type");
+      console.error(JSON.stringify({ event: "webhook_error", reason: "missing_event_type" }));
       return c.text("OK", 200);
     }
 
-    console.log(`Statuspage webhook: ${eventType}`);
+    console.log(JSON.stringify({ event: "webhook_received", eventType }));
 
     // Determine category and format message
     let category, html, componentName;
     if (eventType.startsWith("incident.")) {
       if (!body.incident) {
-        console.error("Statuspage webhook: incident event missing incident data");
+        console.error(JSON.stringify({ event: "webhook_error", reason: "missing_incident_data", eventType }));
         return c.text("OK", 200);
       }
       category = "incident";
       html = formatIncidentMessage(body.incident);
     } else if (eventType.startsWith("component.")) {
       if (!body.component) {
-        console.error("Statuspage webhook: component event missing component data");
+        console.error(JSON.stringify({ event: "webhook_error", reason: "missing_component_data", eventType }));
         return c.text("OK", 200);
       }
       category = "component";
       componentName = body.component.name || null;
       html = formatComponentMessage(body.component, body.component_update);
     } else {
-      console.error(`Statuspage webhook: unknown event type ${eventType}`);
+      console.error(JSON.stringify({ event: "webhook_error", reason: "unknown_event_type", eventType }));
       return c.text("OK", 200);
     }
 
@@ -96,11 +102,11 @@ export async function handleStatuspageWebhook(c) {
       await c.env["claude-status"].sendBatch(messages.slice(i, i + 100));
     }
 
-    console.log(`Enqueued ${messages.length} messages for ${category}${componentName ? `:${componentName}` : ""}`);
+    console.log(JSON.stringify({ event: "webhook_enqueued", category, componentName, count: messages.length }));
     return c.text("OK", 200);
   } catch (err) {
     // Catch-all: log error but still return 200 to prevent Statuspage from removing us
-    console.error("Statuspage webhook: unexpected error", err);
+    console.error(JSON.stringify({ event: "webhook_error", reason: "unexpected", error: err.message }));
     return c.text("OK", 200);
   }
 }

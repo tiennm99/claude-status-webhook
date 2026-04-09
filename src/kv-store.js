@@ -1,3 +1,5 @@
+/** @import { Subscriber, ChatTarget } from "./types.js" */
+
 const KEY_PREFIX = "sub:";
 
 /**
@@ -54,6 +56,10 @@ async function listAllSubscriberKeys(kv) {
 
 /**
  * Add or re-subscribe a user. Preserves existing types and components if already subscribed.
+ * @param {KVNamespace} kv
+ * @param {number} chatId
+ * @param {?number} threadId
+ * @param {string[]} types
  */
 export async function addSubscriber(kv, chatId, threadId, types = ["incident", "component"]) {
   const key = buildKvKey(chatId, threadId);
@@ -105,6 +111,10 @@ export async function updateSubscriberComponents(kv, chatId, threadId, component
 
 /**
  * Get a single subscriber's data, or null if not subscribed
+ * @param {KVNamespace} kv
+ * @param {number} chatId
+ * @param {?number} threadId
+ * @returns {Promise<?Subscriber>}
  */
 export async function getSubscriber(kv, chatId, threadId) {
   const key = buildKvKey(chatId, threadId);
@@ -114,6 +124,10 @@ export async function getSubscriber(kv, chatId, threadId) {
 /**
  * Get subscribers filtered by event type and optional component name.
  * Uses KV metadata from list() — O(1) list call, no individual get() needed.
+ * @param {KVNamespace} kv
+ * @param {string} eventType
+ * @param {?string} componentName
+ * @returns {Promise<ChatTarget[]>}
  */
 export async function getSubscribersByType(kv, eventType, componentName = null) {
   const keys = await listAllSubscriberKeys(kv);

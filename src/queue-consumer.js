@@ -1,8 +1,12 @@
+/** @import { QueueMessage } from "./types.js" */
+
 import { removeSubscriber } from "./kv-store.js";
 import { telegramUrl } from "./telegram-api.js";
 /**
  * Process a batch of queued messages, sending each to Telegram.
  * Handles rate limits (429 → retry), blocked bots (403/400 → remove subscriber).
+ * @param {{ messages: Array<{ body: QueueMessage, ack: () => void, retry: () => void }> }} batch
+ * @param {object} env
  */
 export async function handleQueue(batch, env) {
   let sent = 0, failed = 0, retried = 0, removed = 0;
@@ -12,7 +16,7 @@ export async function handleQueue(batch, env) {
 
     // Defensive check for malformed messages
     if (!chatId || !html) {
-      console.error("Queue: malformed message, skipping", msg.body);
+      console.error(JSON.stringify({ event: "queue_skip", reason: "malformed", body: msg.body }));
       msg.ack();
       continue;
     }
@@ -37,32 +41,32 @@ export async function handleQueue(batch, env) {
         sent++;
         msg.ack();
       } else if (res.status === 403 || res.status === 400) {
-        console.log(`Queue: removing subscriber ${chatId}:${threadId} (HTTP ${res.status})`);
+        console.log(JSON.stringify({ event: "queue_remove", chatId, threadId, status: res.status }));
         await removeSubscriber(env.claude_status, chatId, threadId);
         removed++;
         msg.ack();
       } else if (res.status === 429) {
         const retryAfter = res.headers.get("Retry-After");
-        console.log(`Queue: rate limited for ${chatId}, Retry-After: ${retryAfter ?? "unknown"}`);
+        console.log(JSON.stringify({ event: "queue_ratelimit", chatId, retryAfter }));
         retried++;
         msg.retry();
       } else if (res.status >= 500) {
-        console.error(`Queue: Telegram 5xx (${res.status}) for ${chatId}, retrying`);
+        console.error(JSON.stringify({ event: "queue_retry", chatId, status: res.status }));
         retried++;
         msg.retry();
       } else {
-        console.error(`Queue: unexpected HTTP ${res.status} for ${chatId}`);
+        console.error(JSON.stringify({ event: "queue_error", chatId, status: res.status }));
         failed++;
         msg.ack();
       }
     } catch (err) {
-      console.error("Queue: network error, retrying", err);
+      console.error(JSON.stringify({ event: "queue_network_error", chatId, error: err.message }));
       retried++;
       msg.retry();
     }
   }
 
   if (sent || failed || retried || removed) {
-    console.log(`Queue batch: sent=${sent} failed=${failed} retried=${retried} removed=${removed}`);
+    console.log(JSON.stringify({ event: "queue_batch", sent, failed, retried, removed }));
   }
 }

@@ -1,3 +1,5 @@
+/** @import { ChatTarget } from "./types.js" */
+
 import { Bot, webhookCallback } from "grammy";
 import {
   addSubscriber,
@@ -17,6 +19,7 @@ let kv = null;
 
 /**
  * Extract chatId and threadId from grammY context
+ * @returns {ChatTarget}
  */
 function getChatTarget(ctx) {
   return {

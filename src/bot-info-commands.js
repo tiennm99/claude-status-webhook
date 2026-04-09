@@ -69,7 +69,7 @@ export function registerInfoCommands(bot) {
         );
       }
     } catch (err) {
-      console.error("status command error:", err);
+      console.error(JSON.stringify({ event: "command_error", command: "status", error: err.message }));
       await ctx.reply("Unable to fetch status. Please try again later.");
     }
   });
@@ -91,7 +91,7 @@ export function registerInfoCommands(bot) {
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
     } catch (err) {
-      console.error("history command error:", err);
+      console.error(JSON.stringify({ event: "command_error", command: "history", error: err.message }));
       await ctx.reply("Unable to fetch incident history. Please try again later.");
     }
   });
@@ -116,7 +116,7 @@ export function registerInfoCommands(bot) {
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
     } catch (err) {
-      console.error("uptime command error:", err);
+      console.error(JSON.stringify({ event: "command_error", command: "uptime", error: err.message }));
       await ctx.reply("Unable to fetch uptime data. Please try again later.");
     }
   });
