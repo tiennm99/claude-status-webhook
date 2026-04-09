@@ -1,10 +1,13 @@
 /**
- * Timing-safe string comparison using Web Crypto API
+ * Timing-safe string comparison using Web Crypto API.
+ * Hashes both inputs first so the comparison is always fixed-length (32 bytes),
+ * preventing attackers from probing the secret length via timing side-channels.
  */
 export async function timingSafeEqual(a, b) {
   const encoder = new TextEncoder();
-  const bufA = encoder.encode(a);
-  const bufB = encoder.encode(b);
-  if (bufA.byteLength !== bufB.byteLength) return false;
-  return crypto.subtle.timingSafeEqual(bufA, bufB);
+  const [hashA, hashB] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(a)),
+    crypto.subtle.digest("SHA-256", encoder.encode(b)),
+  ]);
+  return crypto.subtle.timingSafeEqual(hashA, hashB);
 }

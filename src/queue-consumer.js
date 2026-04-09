@@ -42,7 +42,8 @@ export async function handleQueue(batch, env) {
         removed++;
         msg.ack();
       } else if (res.status === 429) {
-        console.log("Queue: rate limited, retrying");
+        const retryAfter = res.headers.get("Retry-After");
+        console.log(`Queue: rate limited for ${chatId}, Retry-After: ${retryAfter ?? "unknown"}`);
         retried++;
         msg.retry();
       } else {

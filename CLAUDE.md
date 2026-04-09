@@ -66,3 +66,16 @@ Bot stores `message_thread_id` from the topic where `/start` was sent. Notificat
 
 - `claude_status` — KV namespace
 - `claude-status` — Queue producer/consumer (batch size 30, max retries 3)
+
+## Documentation
+
+Detailed docs live in `docs/`:
+- `docs/setup-guide.md` — Prerequisites, deployment, local dev
+- `docs/system-architecture.md` — Entry points, data flow, KV schema, queue, security
+- `docs/feature-decisions.md` — Evaluated features and rationale for decisions
+
+## README Guidelines
+
+Keep `README.md` clean and focused: project intro, features, commands, quick start, and links to docs.
+Move detailed setup, architecture, and decision records to `docs/`. Do not bloat the README with
+step-by-step instructions or implementation details.

@@ -64,7 +64,7 @@ export function humanizeStatus(status) {
  * Escape HTML special chars for Telegram's HTML parse mode
  */
 export function escapeHtml(s) {
-  return s?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") ?? "";
+  return s?.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") ?? "";
 }
 
 /**

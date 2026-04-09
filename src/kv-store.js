@@ -23,11 +23,11 @@ function parseKvKey(kvKey) {
   const possibleThread = raw.slice(lastColon + 1);
   if (/^\d+$/.test(possibleThread)) {
     return {
-      chatId: raw.slice(0, lastColon),
+      chatId: Number(raw.slice(0, lastColon)),
       threadId: parseInt(possibleThread, 10),
     };
   }
-  return { chatId: raw, threadId: null };
+  return { chatId: Number(raw), threadId: null };
 }
 
 /**
