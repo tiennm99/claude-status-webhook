@@ -97,6 +97,15 @@ Binding: `claude-status` queue
 - **403/400 handling**: subscriber removed from KV, message acknowledged
 - **Network errors**: `msg.retry()` for transient failures
 
+## Observability
+
+Enabled via `wrangler.jsonc` `observability` config. Automatic — no code changes required.
+
+- **Logs**: All `console.log`/`console.error` calls, request metadata, exceptions. Persisted with invocation logs enabled. Free tier: 200k logs/day, 3-day retention.
+- **Traces**: Automatic instrumentation of fetch calls, KV reads, queue operations. Persisted.
+- **Sampling**: 100% (`head_sampling_rate: 1`) for both logs and traces — reduce for high-volume scenarios
+- **Dashboard**: Cloudflare Dashboard → Workers → Observability
+
 ## Security
 
 - **Statuspage webhook auth**: URL path secret validated with timing-safe SHA-256 comparison

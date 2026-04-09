@@ -10,7 +10,6 @@ import {
   humanizeStatus,
   STATUS_URL,
 } from "./status-fetcher.js";
-
 /**
  * Register info commands: /help, /status, /history, /uptime
  */
