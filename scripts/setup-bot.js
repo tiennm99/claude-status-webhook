@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { createInterface } from "node:readline/promises";
+
 const TELEGRAM_API = "https://api.telegram.org/bot";
 
 const BOT_COMMANDS = [
@@ -12,31 +14,40 @@ const BOT_COMMANDS = [
   { command: "uptime", description: "Component health overview" },
 ];
 
-async function main() {
-  const token = process.env.BOT_TOKEN;
-  const workerUrl = process.env.WORKER_URL;
-
-  if (!token || !workerUrl) {
-    console.error("Required env vars: BOT_TOKEN, WORKER_URL");
-    console.error("Usage: BOT_TOKEN=xxx WORKER_URL=https://your-worker.workers.dev node scripts/setup-bot.js");
+async function prompt(rl, question) {
+  const answer = (await rl.question(question)).trim();
+  if (!answer) {
+    console.error("Input required. Aborting.");
     process.exit(1);
   }
+  return answer;
+}
 
-  // Set webhook
-  const webhookRes = await fetch(`${TELEGRAM_API}${token}/setWebhook`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: `${workerUrl}/webhook/telegram` }),
-  });
-  console.log("Webhook:", await webhookRes.json());
+async function main() {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
 
-  // Register commands
-  const commandsRes = await fetch(`${TELEGRAM_API}${token}/setMyCommands`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ commands: BOT_COMMANDS }),
-  });
-  console.log("Commands:", await commandsRes.json());
+  try {
+    const token = await prompt(rl, "Bot token: ");
+    const workerUrl = await prompt(rl, "Worker URL (e.g. https://your-worker.workers.dev): ");
+
+    // Set webhook
+    const webhookRes = await fetch(`${TELEGRAM_API}${token}/setWebhook`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: `${workerUrl}/webhook/telegram` }),
+    });
+    console.log("Webhook:", await webhookRes.json());
+
+    // Register commands
+    const commandsRes = await fetch(`${TELEGRAM_API}${token}/setMyCommands`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commands: BOT_COMMANDS }),
+    });
+    console.log("Commands:", await commandsRes.json());
+  } finally {
+    rl.close();
+  }
 }
 
 main().catch(console.error);

@@ -92,10 +92,10 @@ Note the worker URL from the output (e.g., `https://claude-status-webhook.<your-
 Run the setup script to register bot commands and set the Telegram webhook:
 
 ```bash
-BOT_TOKEN=your-token WORKER_URL=https://your-worker.workers.dev node scripts/setup-bot.js
+node scripts/setup-bot.js
 ```
 
-You should see `{"ok":true}` for both webhook and commands.
+It will prompt for your bot token and worker URL. You should see `{"ok":true}` for both webhook and commands.
 
 ### 7. Configure Statuspage webhook
 

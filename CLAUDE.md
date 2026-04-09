@@ -11,7 +11,7 @@ Telegram bot that forwards [status.claude.com](https://status.claude.com/) (Atla
 - `npm run dev` — Start local dev server (wrangler dev, emulates KV + Queues locally)
 - `npm run deploy` — Deploy to Cloudflare Workers
 - `npx wrangler deploy --dry-run` — Verify build without deploying
-- `node scripts/setup-bot.js` — One-time: register bot commands + set Telegram webhook (requires BOT_TOKEN and WORKER_URL env vars)
+- `node scripts/setup-bot.js` — One-time: register bot commands + set Telegram webhook (interactive prompts)
 
 No test framework configured yet. No linter configured.
 
