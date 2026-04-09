@@ -74,6 +74,12 @@ Detailed docs live in `docs/`:
 - `docs/system-architecture.md` — Entry points, data flow, KV schema, queue, security
 - `docs/feature-decisions.md` — Evaluated features and rationale for decisions
 
+## Code Guidelines
+
+Prefer well-established npm packages over hand-written utilities for common operations
+(e.g., date formatting, validation, string manipulation). Only write custom utils when
+the logic is trivial (< 5 lines) or platform-specific (e.g., CF Workers crypto APIs).
+
 ## README Guidelines
 
 Keep `README.md` clean and focused: project intro, features, commands, quick start, and links to docs.
