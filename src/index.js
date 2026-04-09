@@ -6,6 +6,19 @@ import { setupBot } from "./bot-setup.js";
 
 const app = new Hono();
 
+// Normalize double slashes in URL path (e.g. //webhook/... → /webhook/...)
+// Statuspage may send webhooks with double slashes; rewrite path so routes match.
+app.use("*", async (c, next) => {
+  const url = new URL(c.req.url);
+  const normalized = url.pathname.replace(/\/\/+/g, "/");
+  if (normalized !== url.pathname) {
+    url.pathname = normalized;
+    const newReq = new Request(url.toString(), c.req.raw);
+    return app.fetch(newReq, c.env, c.executionCtx);
+  }
+  return next();
+});
+
 app.get("/", (c) => c.text("Claude Status Bot is running"));
 app.get("/webhook/setup/:secret", (c) => setupBot(c));
 app.post("/webhook/telegram", (c) => handleTelegramWebhook(c));
