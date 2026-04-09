@@ -11,6 +11,7 @@ const BOT_COMMANDS = [
   { command: "status", description: "Current system status" },
   { command: "subscribe", description: "Set notification preferences" },
   { command: "history", description: "Recent incidents" },
+  { command: "info", description: "Chat ID & subscription info" },
   { command: "uptime", description: "Component health overview" },
 ];
 

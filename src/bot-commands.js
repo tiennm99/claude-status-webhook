@@ -132,6 +132,27 @@ function createBot(token) {
     });
   });
 
+  bot.command("info", async (ctx) => {
+    const { chatId, threadId } = getChatTarget(ctx);
+    const idLine =
+      threadId != null ? `<code>${chatId}:${threadId}</code>` : `<code>${chatId}</code>`;
+
+    const sub = await getSubscriber(kv, chatId, threadId);
+    let subLine;
+    if (!sub) {
+      subLine = "Not subscribed. Use /start to subscribe.";
+    } else {
+      const types = sub.types?.join(", ") || "none";
+      const components = sub.components?.length ? sub.components.join(", ") : "all";
+      subLine =
+        `Types: <code>${types}</code>\n` + `Components: <code>${components}</code>`;
+    }
+
+    await ctx.reply(`<b>Chat Info</b>\n\nChat ID: ${idLine}\n\n${subLine}`, {
+      parse_mode: "HTML",
+    });
+  });
+
   // Info commands: /help, /status, /history, /uptime
   registerInfoCommands(bot);
 
@@ -141,6 +162,7 @@ function createBot(token) {
         "/help — Detailed command guide\n" +
         "/start — Subscribe to notifications\n" +
         "/stop — Unsubscribe\n" +
+        "/info — Chat ID & subscription info\n" +
         "/status — Current system status\n" +
         "/subscribe — Notification preferences\n" +
         "/history — Recent incidents\n" +

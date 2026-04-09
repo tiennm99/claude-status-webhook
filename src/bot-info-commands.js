@@ -26,6 +26,8 @@ export function registerInfoCommands(bot) {
         `Show current status of all components.\n` +
         `Add a component name for a specific check.\n` +
         `Example: <code>/status api</code>\n\n` +
+        `<b>/info</b>\n` +
+        `Show chat ID and current subscription status.\n\n` +
         `<b>/subscribe</b> &lt;type&gt; [component]\n` +
         `Set what notifications you receive.\n` +
         `Types: <code>incident</code>, <code>component</code>, <code>all</code>\n` +
