@@ -50,7 +50,7 @@ Suggested features evaluated during code review (April 2026). Each was declined 
 
 **Idea**: Verify Statuspage webhook payloads using HMAC signatures as a second auth layer beyond URL secret.
 
-**Decision**: Skip. Atlassian Statuspage does not provide HMAC signature headers for webhook deliveries. The URL secret is the only auth mechanism they support. If they add signature support in the future, this should be revisited.
+**Decision**: Skip. Atlassian Statuspage's public subscriber webhooks (the "Subscribe to Updates" → "Webhook" flow) do not provide HMAC signature headers. The only verification mechanism available is embedding a secret in the URL path, which this project already implements with timing-safe comparison. This is a platform limitation, not a design choice — if Atlassian adds signature support in the future (tracked as BCLOUD-14683), this should be revisited.
 
 ### 9. Proactive Rate Limit Tracking
 
