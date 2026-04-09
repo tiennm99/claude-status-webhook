@@ -33,7 +33,6 @@ Cloudflare Workers with two entry points exported from `src/index.js`:
 | GET | `/` | inline | Health check |
 | POST | `/webhook/telegram` | `bot-commands.js` | grammY `webhookCallback("cloudflare-mod")` |
 | POST | `/webhook/status/:secret` | `statuspage-webhook.js` | Receives Statuspage webhooks (URL secret) |
-| POST | `/migrate/:secret` | inline | One-time KV migration (remove after use) |
 
 ### Data Flow
 

@@ -136,31 +136,3 @@ export async function getSubscribersByType(kv, eventType, componentName = null) 
 
   return results;
 }
-
-/**
- * One-time migration from single-key "subscribers" to per-key format.
- * Returns count of migrated entries.
- */
-export async function migrateFromSingleKey(kv) {
-  const old = await kv.get("subscribers", "json");
-  if (!old) return 0;
-
-  const entries = Object.entries(old);
-  for (const [compositeKey, value] of entries) {
-    const data = { types: value.types || [], components: value.components || [] };
-    await kv.put(`${KEY_PREFIX}${compositeKey}`, JSON.stringify(data), {
-      metadata: buildMetadata(data.types, data.components),
-    });
-  }
-
-  // Verify migrated count before deleting old key
-  const migrated = await listAllSubscriberKeys(kv);
-  if (migrated.length >= entries.length) {
-    await kv.delete("subscribers");
-    console.log(`Migration complete: ${entries.length} subscribers migrated`);
-  } else {
-    console.error(`Migration verification failed: expected ${entries.length}, got ${migrated.length}`);
-  }
-
-  return entries.length;
-}

@@ -105,16 +105,6 @@ It will prompt for your bot token and worker URL. You should see `{"ok":true}` f
 
 Replace `<WEBHOOK_SECRET>` with the secret you set in step 4.
 
-### 8. Run migration (if upgrading)
-
-If you have existing subscribers from an older version, run the migration endpoint once:
-
-```bash
-curl -X POST https://<WORKER_URL>/migrate/<WEBHOOK_SECRET>
-```
-
-This converts the old single-key format to per-subscriber KV keys. Remove the `/migrate` route from `src/index.js` after confirming success.
-
 ## Local Development
 
 ```bash
