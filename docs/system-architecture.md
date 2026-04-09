@@ -56,7 +56,7 @@ A middleware in `index.js` normalizes double slashes in URL paths (Statuspage oc
 | File | Lines | Responsibility |
 |------|-------|---------------|
 | `index.js` | ~30 | Hono router, path normalization middleware, export handlers |
-| `bot-commands.js` | ~145 | `/start`, `/stop`, `/subscribe` — subscription management |
+| `bot-commands.js` | ~155 | `/start`, `/stop`, `/subscribe` — subscription management (cached Bot instance) |
 | `bot-info-commands.js` | ~125 | `/help`, `/status`, `/history`, `/uptime` — read-only info |
 | `statuspage-webhook.js` | ~85 | Webhook validation, event parsing, subscriber fan-out |
 | `queue-consumer.js` | ~65 | Batch message delivery, retry/removal logic |
@@ -94,6 +94,7 @@ Binding: `claude-status` queue
 - **Batch size**: 30 messages per consumer invocation
 - **Max retries**: 3 (configured in `wrangler.jsonc`)
 - **429 handling**: `msg.retry()` with CF Queues backoff; `Retry-After` header logged
+- **5xx handling**: `msg.retry()` for transient Telegram server errors
 - **403/400 handling**: subscriber removed from KV, message acknowledged
 - **Network errors**: `msg.retry()` for transient failures
 
@@ -108,6 +109,7 @@ Enabled via `wrangler.jsonc` `observability` config. Automatic — no code chang
 
 ## Security
 
+- **Statuspage webhook always-200**: Handler always returns HTTP 200 (even on errors) to prevent Statuspage from removing the webhook subscription. Errors are logged, not surfaced as HTTP status codes.
 - **Statuspage webhook auth**: URL path secret validated with timing-safe SHA-256 comparison
 - **Telegram webhook**: Registered via `setup-bot.js` — Telegram only sends to the registered URL
 - **No secrets in code**: `BOT_TOKEN` and `WEBHOOK_SECRET` stored as Cloudflare secrets

@@ -17,7 +17,7 @@ function parseKvKey(kvKey) {
   const lastColon = raw.lastIndexOf(":");
   // No colon or only negative sign prefix — no threadId
   if (lastColon <= 0) {
-    return { chatId: raw, threadId: null };
+    return { chatId: Number(raw), threadId: null };
   }
   // Check if the part after last colon is a valid threadId (numeric)
   const possibleThread = raw.slice(lastColon + 1);

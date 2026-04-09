@@ -8,6 +8,13 @@ import {
 } from "./kv-store.js";
 import { fetchComponentByName, escapeHtml } from "./status-fetcher.js";
 import { registerInfoCommands } from "./bot-info-commands.js";
+
+/**
+ * Module-level KV reference, updated each request.
+ * Safe because CF Workers are single-threaded per isolate.
+ */
+let kv = null;
+
 /**
  * Extract chatId and threadId from grammY context
  */
@@ -19,11 +26,10 @@ function getChatTarget(ctx) {
 }
 
 /**
- * Handle incoming Telegram webhook via grammY
+ * Create Bot with all commands registered. Called once per isolate.
  */
-export async function handleTelegramWebhook(c) {
-  const bot = new Bot(c.env.BOT_TOKEN);
-  const kv = c.env.claude_status;
+function createBot(token) {
+  const bot = new Bot(token);
 
   bot.command("start", async (ctx) => {
     const { chatId, threadId } = getChatTarget(ctx);
@@ -140,6 +146,29 @@ export async function handleTelegramWebhook(c) {
     );
   });
 
-  const handler = webhookCallback(bot, "cloudflare-mod");
-  return handler(c.req.raw);
+  return bot;
+}
+
+/**
+ * Cached Bot instance — avoids rebuilding middleware chain on every request.
+ * CF Workers reuse isolates, so module-level state persists across requests.
+ */
+let cachedBot = null;
+let cachedToken = null;
+let cachedHandler = null;
+
+/**
+ * Handle incoming Telegram webhook via grammY
+ */
+export async function handleTelegramWebhook(c) {
+  // Update module-level KV ref (same binding across requests, but kept explicit)
+  kv = c.env.claude_status;
+
+  if (!cachedBot || cachedToken !== c.env.BOT_TOKEN) {
+    cachedBot = createBot(c.env.BOT_TOKEN);
+    cachedToken = c.env.BOT_TOKEN;
+    cachedHandler = webhookCallback(cachedBot, "cloudflare-mod");
+  }
+
+  return cachedHandler(c.req.raw);
 }

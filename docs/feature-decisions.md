@@ -78,7 +78,23 @@ Ordered by likelihood of future implementation (top = most likely to revisit).
 
 **Why this rank**: Out of scope. The bot is the product — adding a web frontend changes the project's nature.
 
-### 10. Digest / Quiet Mode
+### 10. Dead Letter Queue for Failed Messages
+
+**Idea**: After CF Queues exhausts 3 retries, persist failed messages to KV or a dedicated DLQ for debugging.
+
+**Decision**: Skip. CF Workers already logs all queue consumer errors (including final retry failures) via the observability config. With 100% log sampling and persisted invocation logs, failed messages are visible in the Cloudflare Dashboard. Adding a KV-based DLQ introduces write overhead on every failure and cleanup logic for stale entries — not worth it when logs already provide the same visibility.
+
+**Why this rank**: Logging is sufficient for current scale. Revisit only if log retention (3-day free tier) is too short for debugging patterns.
+
+### 11. KV List Scalability (Subscriber Sharding)
+
+**Idea**: Shard subscriber keys by event type (e.g., `sub:incident:{chatId}`, `sub:component:{chatId}`) to avoid listing all subscribers on every webhook.
+
+**Decision**: Skip. Current `kv.list({ prefix: "sub:" })` pagination works for hundreds of subscribers. Sharding requires a KV schema migration, dual-write logic during transition, and doubles storage for subscribers who want both types. Not justified until `kv.list()` latency or cost becomes measurable.
+
+**Why this rank**: Clear trigger: slow webhook response times at high subscriber counts. Migration path is straightforward when needed.
+
+### 12. Digest / Quiet Mode
 
 **Idea**: Batch notifications into a daily summary instead of instant alerts.
 

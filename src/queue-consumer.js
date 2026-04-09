@@ -46,6 +46,10 @@ export async function handleQueue(batch, env) {
         console.log(`Queue: rate limited for ${chatId}, Retry-After: ${retryAfter ?? "unknown"}`);
         retried++;
         msg.retry();
+      } else if (res.status >= 500) {
+        console.error(`Queue: Telegram 5xx (${res.status}) for ${chatId}, retrying`);
+        retried++;
+        msg.retry();
       } else {
         console.error(`Queue: unexpected HTTP ${res.status} for ${chatId}`);
         failed++;

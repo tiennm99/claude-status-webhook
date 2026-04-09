@@ -13,7 +13,10 @@ Telegram bot that forwards [status.claude.com](https://status.claude.com/) (Atla
 - `npx wrangler deploy --dry-run` — Verify build without deploying
 - `node scripts/setup-bot.js` — One-time: register bot commands + set Telegram webhook (interactive prompts)
 
-No test framework configured yet. No linter configured.
+- `npm test` — Run tests (vitest + @cloudflare/vitest-pool-workers, runs in Workers runtime)
+- `npm run test:watch` — Run tests in watch mode
+
+No linter configured.
 
 ## Secrets (set via `wrangler secret put`)
 

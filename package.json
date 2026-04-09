@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -24,6 +26,8 @@
     "hono": "^4.12.12"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.14.2",
+    "vitest": "^4.1.3",
     "wrangler": "^4.81.0"
   }
 }
