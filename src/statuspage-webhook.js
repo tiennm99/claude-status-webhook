@@ -1,6 +1,7 @@
 import { getSubscribersByType } from "./kv-store.js";
 import { humanizeStatus, escapeHtml } from "./status-fetcher.js";
 import { timingSafeEqual } from "./crypto-utils.js";
+import { notifyAdmin } from "./admin-notifier.js";
 
 /**
  * Format incident event as Telegram HTML message
@@ -42,13 +43,17 @@ export async function handleStatuspageWebhook(c) {
     // Validate URL secret (timing-safe)
     // Guard against misconfigured deploy (undefined env var)
     if (!c.env.WEBHOOK_SECRET) {
-      console.error(JSON.stringify({ event: "webhook_error", reason: "WEBHOOK_SECRET not configured" }));
+      const reason = "WEBHOOK_SECRET not configured";
+      console.error(JSON.stringify({ event: "webhook_error", reason }));
+      c.executionCtx.waitUntil(notifyAdmin(c.env, reason));
       return c.text("OK", 200);
     }
 
     const secret = c.req.param("secret");
     if (!await timingSafeEqual(secret, c.env.WEBHOOK_SECRET)) {
-      console.error(JSON.stringify({ event: "webhook_error", reason: "invalid_secret" }));
+      const reason = "invalid_secret";
+      console.error(JSON.stringify({ event: "webhook_error", reason }));
+      c.executionCtx.waitUntil(notifyAdmin(c.env, reason));
       return c.text("OK", 200);
     }
 
@@ -57,13 +62,18 @@ export async function handleStatuspageWebhook(c) {
     try {
       body = await c.req.json();
     } catch {
-      console.error(JSON.stringify({ event: "webhook_error", reason: "invalid_json" }));
+      const reason = "invalid_json";
+      console.error(JSON.stringify({ event: "webhook_error", reason }));
+      c.executionCtx.waitUntil(notifyAdmin(c.env, reason));
       return c.text("OK", 200);
     }
 
     const eventType = body?.meta?.event_type;
     if (!eventType) {
-      console.error(JSON.stringify({ event: "webhook_error", reason: "missing_event_type" }));
+      const reason = "missing_event_type";
+      const details = { keys: Object.keys(body || {}), meta: body?.meta ?? null };
+      console.error(JSON.stringify({ level: "error", event: "webhook_error", reason, ...details }));
+      c.executionCtx.waitUntil(notifyAdmin(c.env, reason, details));
       return c.text("OK", 200);
     }
 
@@ -73,21 +83,27 @@ export async function handleStatuspageWebhook(c) {
     let category, html, componentName;
     if (eventType.startsWith("incident.")) {
       if (!body.incident) {
-        console.error(JSON.stringify({ event: "webhook_error", reason: "missing_incident_data", eventType }));
+        const reason = "missing_incident_data";
+        console.error(JSON.stringify({ event: "webhook_error", reason, eventType }));
+        c.executionCtx.waitUntil(notifyAdmin(c.env, reason, { eventType }));
         return c.text("OK", 200);
       }
       category = "incident";
       html = formatIncidentMessage(body.incident);
     } else if (eventType.startsWith("component.")) {
       if (!body.component) {
-        console.error(JSON.stringify({ event: "webhook_error", reason: "missing_component_data", eventType }));
+        const reason = "missing_component_data";
+        console.error(JSON.stringify({ event: "webhook_error", reason, eventType }));
+        c.executionCtx.waitUntil(notifyAdmin(c.env, reason, { eventType }));
         return c.text("OK", 200);
       }
       category = "component";
       componentName = body.component.name || null;
       html = formatComponentMessage(body.component, body.component_update);
     } else {
-      console.error(JSON.stringify({ event: "webhook_error", reason: "unknown_event_type", eventType }));
+      const reason = "unknown_event_type";
+      console.error(JSON.stringify({ event: "webhook_error", reason, eventType }));
+      c.executionCtx.waitUntil(notifyAdmin(c.env, reason, { eventType }));
       return c.text("OK", 200);
     }
 
@@ -106,7 +122,9 @@ export async function handleStatuspageWebhook(c) {
     return c.text("OK", 200);
   } catch (err) {
     // Catch-all: log error but still return 200 to prevent Statuspage from removing us
-    console.error(JSON.stringify({ event: "webhook_error", reason: "unexpected", error: err.message }));
+    const reason = "unexpected";
+    console.error(JSON.stringify({ event: "webhook_error", reason, error: err.message }));
+    c.executionCtx.waitUntil(notifyAdmin(c.env, reason, { error: err.message }));
     return c.text("OK", 200);
   }
 }

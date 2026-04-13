@@ -22,6 +22,7 @@ No linter configured.
 
 - `BOT_TOKEN` — Telegram bot token
 - `WEBHOOK_SECRET` — Secret token in Statuspage webhook URL path
+- `ADMIN_CHAT_ID` — Telegram chat ID to receive webhook error notifications (optional)
 
 ## Architecture
 
@@ -39,7 +40,7 @@ Cloudflare Workers with two entry points exported from `src/index.js`:
 
 ### Data Flow
 
-1. **Statuspage → Worker**: Webhook POST → verify URL secret (timing-safe via `crypto-utils.js`) → parse incident/component event → filter subscribers by type + component → `sendBatch` to CF Queue
+1. **Statuspage → Worker**: Webhook POST → verify URL secret (timing-safe via `crypto-utils.js`) → parse incident/component event → filter subscribers by type + component → `sendBatch` to CF Queue. On any error, admin is notified via Telegram (`admin-notifier.js`, non-blocking via `waitUntil`)
 2. **Queue → Telegram**: Consumer processes batches of 30 → `sendMessage` via `telegram-api.js` helper → auto-removes blocked subscribers (403/400), retries on 429
 3. **User → Bot**: Telegram webhook → grammY handles `/help`, `/start`, `/stop`, `/status`, `/subscribe`, `/history`, `/uptime` commands → reads/writes KV
 

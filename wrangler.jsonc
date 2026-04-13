@@ -41,4 +41,5 @@
 	// Secrets (set via `wrangler secret put`):
 	// BOT_TOKEN - Telegram bot token
 	// WEBHOOK_SECRET - Statuspage webhook URL secret
+	// ADMIN_CHAT_ID - Telegram chat ID to receive error notifications
 }

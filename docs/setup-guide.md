@@ -55,6 +55,10 @@ npx wrangler secret put BOT_TOKEN
 
 npx wrangler secret put WEBHOOK_SECRET
 # Choose a random secret string for the Statuspage webhook URL
+
+npx wrangler secret put ADMIN_CHAT_ID
+# (Optional) Your Telegram chat ID — receive webhook error alerts via Telegram
+# Use the bot's /info command to find your chat ID
 ```
 
 ### 5. Deploy

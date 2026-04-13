@@ -63,6 +63,7 @@ A middleware in `index.js` normalizes double slashes in URL paths (Statuspage oc
 | `kv-store.js` | ~140 | KV key management, subscriber CRUD, filtered listing |
 | `status-fetcher.js` | ~120 | Statuspage API client, HTML formatters, status helpers |
 | `crypto-utils.js` | ~12 | Timing-safe string comparison (SHA-256 hashed) |
+| `admin-notifier.js` | ~25 | Sends webhook error alerts to admin via Telegram (non-blocking) |
 | `telegram-api.js` | ~9 | Telegram Bot API URL builder |
 
 ## KV Storage
@@ -103,6 +104,7 @@ Binding: `claude-status` queue
 Enabled via `wrangler.jsonc` `observability` config. Automatic — no code changes required.
 
 - **Logs**: All `console.log`/`console.error` calls, request metadata, exceptions. Persisted with invocation logs enabled. Free tier: 200k logs/day, 3-day retention.
+- **Admin alerts**: Webhook errors are forwarded to admin Telegram chat in real-time (requires `ADMIN_CHAT_ID` secret)
 - **Traces**: Automatic instrumentation of fetch calls, KV reads, queue operations. Persisted.
 - **Sampling**: 100% (`head_sampling_rate: 1`) for both logs and traces — reduce for high-volume scenarios
 - **Dashboard**: Cloudflare Dashboard → Workers → Observability
@@ -110,9 +112,10 @@ Enabled via `wrangler.jsonc` `observability` config. Automatic — no code chang
 ## Security
 
 - **Statuspage webhook always-200**: Handler always returns HTTP 200 (even on errors) to prevent Statuspage from removing the webhook subscription. Errors are logged, not surfaced as HTTP status codes.
+- **Admin error alerts**: All webhook errors send a Telegram notification to `ADMIN_CHAT_ID` (if set) via `admin-notifier.js`. Uses `waitUntil()` to avoid blocking the response. Silently fails if `ADMIN_CHAT_ID` is not configured.
 - **Statuspage webhook auth**: URL path secret validated with timing-safe SHA-256 comparison
 - **Telegram webhook**: Registered via `setup-bot.js` — Telegram only sends to the registered URL
-- **No secrets in code**: `BOT_TOKEN` and `WEBHOOK_SECRET` stored as Cloudflare secrets
+- **No secrets in code**: `BOT_TOKEN`, `WEBHOOK_SECRET`, and `ADMIN_CHAT_ID` stored as Cloudflare secrets
 - **HTML injection**: All user/external strings passed through `escapeHtml()` before Telegram HTML rendering
 
 ## Dependencies
