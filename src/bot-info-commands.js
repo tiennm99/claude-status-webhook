@@ -39,7 +39,8 @@ export function registerInfoCommands(bot) {
         `Example: <code>/history 3</code>\n\n` +
         `<b>/uptime</b>\n` +
         `Show current component health overview.\n\n` +
-        `<a href="${STATUS_URL}">status.claude.com</a>`,
+        `<a href="${STATUS_URL}">status.claude.com</a>\n\n` +
+        `Contact @tiennm5 if you need support.`,
       { parse_mode: "HTML", disable_web_page_preview: true }
     );
   });
