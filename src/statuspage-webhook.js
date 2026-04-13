@@ -68,42 +68,21 @@ export async function handleStatuspageWebhook(c) {
       return c.text("OK", 200);
     }
 
-    const eventType = body?.meta?.event_type;
-    if (!eventType) {
-      const reason = "missing_event_type";
-      const details = { keys: Object.keys(body || {}), meta: body?.meta ?? null };
-      console.error(JSON.stringify({ level: "error", event: "webhook_error", reason, ...details }));
-      c.executionCtx.waitUntil(notifyAdmin(c.env, reason, details));
-      return c.text("OK", 200);
-    }
-
-    console.log(JSON.stringify({ event: "webhook_received", eventType }));
-
-    // Determine category and format message
+    // Statuspage payloads have no event_type discriminator — detect by root-level keys
     let category, html, componentName;
-    if (eventType.startsWith("incident.")) {
-      if (!body.incident) {
-        const reason = "missing_incident_data";
-        console.error(JSON.stringify({ event: "webhook_error", reason, eventType }));
-        c.executionCtx.waitUntil(notifyAdmin(c.env, reason, { eventType }));
-        return c.text("OK", 200);
-      }
+    if (body.incident) {
       category = "incident";
       html = formatIncidentMessage(body.incident);
-    } else if (eventType.startsWith("component.")) {
-      if (!body.component) {
-        const reason = "missing_component_data";
-        console.error(JSON.stringify({ event: "webhook_error", reason, eventType }));
-        c.executionCtx.waitUntil(notifyAdmin(c.env, reason, { eventType }));
-        return c.text("OK", 200);
-      }
+      console.log(JSON.stringify({ event: "webhook_received", category, incident: body.incident.name }));
+    } else if (body.component_update || body.component) {
       category = "component";
-      componentName = body.component.name || null;
-      html = formatComponentMessage(body.component, body.component_update);
+      const component = body.component;
+      componentName = component?.name || null;
+      html = formatComponentMessage(component, body.component_update);
+      console.log(JSON.stringify({ event: "webhook_received", category, component: componentName }));
     } else {
-      const reason = "unknown_event_type";
-      console.error(JSON.stringify({ event: "webhook_error", reason, eventType }));
-      c.executionCtx.waitUntil(notifyAdmin(c.env, reason, { eventType }));
+      // Unknown payload shape — log and accept
+      console.log(JSON.stringify({ event: "webhook_unknown", keys: Object.keys(body) }));
       return c.text("OK", 200);
     }
 
