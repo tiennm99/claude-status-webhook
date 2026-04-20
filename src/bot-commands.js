@@ -157,6 +157,10 @@ function createBot(token) {
   registerInfoCommands(bot);
 
   bot.on("message", async (ctx) => {
+    const replyTo = ctx.message?.reply_to_message;
+    if (replyTo && replyTo.from?.id === ctx.me.id) {
+      return;
+    }
     await ctx.reply(
       "<b>Claude Status Bot</b>\n\n" +
         "/help — Detailed command guide\n" +
