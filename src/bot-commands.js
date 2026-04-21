@@ -157,6 +157,7 @@ function createBot(token) {
   registerInfoCommands(bot);
 
   bot.on("message", async (ctx) => {
+    if (ctx.message?.pinned_message) return;
     const replyTo = ctx.message?.reply_to_message;
     if (replyTo && replyTo.from?.id === ctx.me.id) {
       return;
