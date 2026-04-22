@@ -156,26 +156,6 @@ function createBot(token) {
   // Info commands: /help, /status, /history, /uptime
   registerInfoCommands(bot);
 
-  bot.on("message", async (ctx) => {
-    if (ctx.message?.pinned_message) return;
-    const replyTo = ctx.message?.reply_to_message;
-    if (replyTo && replyTo.from?.id === ctx.me.id) {
-      return;
-    }
-    await ctx.reply(
-      "<b>Claude Status Bot</b>\n\n" +
-        "/help — Detailed command guide\n" +
-        "/start — Subscribe to notifications\n" +
-        "/stop — Unsubscribe\n" +
-        "/info — Chat ID & subscription info\n" +
-        "/status — Current system status\n" +
-        "/subscribe — Notification preferences\n" +
-        "/history — Recent incidents\n" +
-        "/uptime — Component health overview",
-      { parse_mode: "HTML" }
-    );
-  });
-
   return bot;
 }
 
