@@ -23,7 +23,7 @@
   "homepage": "https://github.com/tiennm99/claude-status-webhook#readme",
   "dependencies": {
     "grammy": "^1.42.0",
-    "hono": "^4.12.12"
+    "hono": "^4.12.14"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.14.2",
