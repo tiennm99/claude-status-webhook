@@ -32,7 +32,7 @@ Fully serverless on [Cloudflare Workers](https://workers.cloudflare.com/) (free 
 ```bash
 git clone https://github.com/tiennm99/claude-status-webhook.git
 cd claude-status-webhook
-npm install
+pnpm install
 ```
 
 See [Setup Guide](docs/setup-guide.md) for full deployment instructions.

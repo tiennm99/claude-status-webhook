@@ -23,7 +23,7 @@
 ```bash
 git clone https://github.com/tiennm99/claude-status-webhook.git
 cd claude-status-webhook
-npm install
+pnpm install
 ```
 
 ### 2. Authenticate with Cloudflare
@@ -64,7 +64,7 @@ npx wrangler secret put ADMIN_CHAT_ID
 ### 5. Deploy
 
 ```bash
-npm run deploy
+pnpm deploy
 ```
 
 Note the worker URL from the output (e.g., `https://claude-status-webhook.<your-subdomain>.workers.dev`).
@@ -90,7 +90,7 @@ Replace `<WEBHOOK_SECRET>` with the secret you set in step 4.
 ## Local Development
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 This starts a local dev server with wrangler that emulates KV and Queues locally. Test with curl:
