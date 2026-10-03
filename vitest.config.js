@@ -1,5 +1,5 @@
 import { defineConfig } from "vitest/config";
-import { cloudflarePool, cloudflareTest } from "@cloudflare/vitest-pool-workers";
+import { cloudflarePool, cloudflareTest } from "@cloudflare/vitest-plugin";
 
 export default defineConfig({
   plugins: [
@@ -8,7 +8,7 @@ export default defineConfig({
       miniflare: {
         // Override remote KV with local-only for tests
         kvNamespaces: ["claude_status"],
-        // Pre-add flags so vitest-pool-workers doesn't emit debug noise
+        // Pre-add flags so the Workers Vitest plugin doesn't emit debug noise
         compatibilityFlags: [
           "enable_nodejs_tty_module",
           "enable_nodejs_fs_module",
